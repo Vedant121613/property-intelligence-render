@@ -18,6 +18,7 @@ import TransactionsModal from '../components/TransactionsModal';
 import ProjectCard from '../components/ProjectCard';
 import { getProjectDetails } from '../services/propertyService';
 import { useAuth } from '../context/AuthContext';
+import kharadiData from '../data/kharadiData.json';
 
 export default function ProjectPage({
   cityId = 'pune',
@@ -34,6 +35,7 @@ export default function ProjectPage({
   const [showAllTxnsModal, setShowAllTxnsModal] = useState(false);
   const [bhkFilter, setBhkFilter] = useState('all');
   const [unlockedLastSold, setUnlockedLastSold] = useState(false);
+  const [allModalTransactions, setAllModalTransactions] = useState({ sale: [], rent: [] });
 
   useEffect(() => {
     let isMounted = true;
@@ -43,6 +45,36 @@ export default function ProjectPage({
         if (isMounted) {
           setProject(res);
           setLoading(false);
+
+          // Load ALL transactions from kharadiData.json for the modal
+          const kMatch = kharadiData.projects?.find(p =>
+            p.id === projectId ||
+            p.slug === projectId ||
+            p.id === res.id ||
+            p.slug === res.id ||
+            p.name === res.name ||
+            (p.aliases && p.aliases.includes(projectId))
+          );
+          if (kMatch && kMatch.recentTransactions && kMatch.recentTransactions.length > 0) {
+            const allSaleTxns = kMatch.recentTransactions.map(t => ({
+              id: t.id,
+              date: t.date || '-',
+              type: t.docType || t.type || 'Agreement to Sale',
+              floorTower: t.floorTower || `Floor ${t.floor || '-'}, ${t.building || 'Wing A'}`,
+              unit: t.unit || 'Residential Unit',
+              amount: t.priceFormatted || t.amount || '-',
+              purchaser: t.purchaser,
+              seller: t.seller,
+              docNo: t.docNo,
+              carpetArea: t.carpetArea,
+              isLocked: true,
+              project: kMatch.name
+            }));
+            if (isMounted) setAllModalTransactions({ sale: allSaleTxns, rent: [] });
+          } else {
+            // fallback to what came from the API
+            if (isMounted) setAllModalTransactions(res.transactions || { sale: [], rent: [] });
+          }
         }
       })
       .catch(err => {
@@ -327,7 +359,7 @@ export default function ProjectPage({
         {/* Recent Transactions Section */}
         <TransactionsTable
           transactions={project.transactions}
-          totalTransactionsCount={project.totalTransactionsCount || 72}
+          totalTransactionsCount={allModalTransactions.sale.length || project.totalTransactionsCount || 0}
           onViewAllClick={() => setShowAllTxnsModal(true)}
           onNavigate={onNavigate}
         />
@@ -376,7 +408,7 @@ export default function ProjectPage({
         isOpen={showAllTxnsModal}
         onClose={() => setShowAllTxnsModal(false)}
         projectName={project.name}
-        transactions={project.transactions}
+        transactions={allModalTransactions}
       />
     </main>
   );

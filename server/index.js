@@ -698,17 +698,11 @@ app.get('/api/pune/villages/:talukaSlug', async (req, res) => {
     villages = puneHierarchyFallback.villagesByTaluka[tClean] || [];
   }
 
-  // If querying Haveli, guarantee Kharadi is at the very top with full active project count
+  // If querying Haveli, guarantee Kharadi is at the very top with correct authentic project count
   if (isHaveli) {
-    let kharadiCount = 231;
-    try {
-      const kCountRes = await query(`SELECT COUNT(*) FROM kharadi_projects`);
-      if (kCountRes.rows[0]?.count) {
-        kharadiCount = parseInt(kCountRes.rows[0].count, 10);
-      }
-    } catch {
-      // use default
-    }
+    // Use actual count from kharadiData.json (5 authentic projects from project gandhiq.csv)
+    const kharadiProjectCount = kharadiFallback?.projects?.length || 5;
+    const kharadiTxnCount = kharadiFallback?.totalTransactions || 1525;
 
     villages = villages.filter(v => v.slug !== 'kharadi' && v.name.toLowerCase() !== 'kharadi');
     villages.unshift({
@@ -716,8 +710,8 @@ app.get('/api/pune/villages/:talukaSlug', async (req, res) => {
       slug: 'kharadi',
       taluka: 'Haveli',
       talukaSlug: 'haveli',
-      projectCount: kharadiCount,
-      saleTxns: 2671,
+      projectCount: kharadiProjectCount,
+      saleTxns: kharadiTxnCount,
       avgPrice: '₹ 9,250/sq.ft'
     });
   }
@@ -746,20 +740,6 @@ app.get('/api/pune/projects', async (req, res) => {
         count: fallbackList.length,
         locality: 'Kharadi',
         projects: fallbackList
-      });
-    }
-
-      // Kharadi fallback
-      let fallbackList = kharadiFallback?.projects || [];
-      if (search) {
-        const s = search.toLowerCase();
-        fallbackList = fallbackList.filter(p => p.name.toLowerCase().includes(s) || (p.reraNumbers && p.reraNumbers.toLowerCase().includes(s)));
-      }
-      return res.json({
-        success: true,
-        count: fallbackList.length,
-        locality: 'Kharadi',
-        projects: fallbackList.slice(parseInt(offset, 10), parseInt(offset, 10) + parseInt(limit, 10))
       });
     }
 
