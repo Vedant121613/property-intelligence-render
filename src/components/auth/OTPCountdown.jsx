@@ -1,4 +1,5 @@
 import React from 'react';
+import { Clock, RefreshCw, MessageSquare } from 'lucide-react';
 
 export default function OTPCountdown({ 
   timerSeconds, 
@@ -9,29 +10,37 @@ export default function OTPCountdown({
 }) {
   return (
     <div className="auth-timer-resend-area">
-      <div className="auth-expiry-timer-text">
-        {timerSeconds > 0 ? (
-          <>Resend available in <strong style={{ color: '#1E293B' }}>{formatTime(timerSeconds)}</strong></>
-        ) : (
-          <span style={{ color: '#16A34A', fontWeight: 600 }}>You can now request a new code</span>
-        )}
-      </div>
+      {timerSeconds > 0 ? (
+        <div className="auth-timer-pill">
+          <Clock size={14} style={{ color: '#2563EB' }} />
+          <span>Resend code available in <strong>{formatTime(timerSeconds)}</strong></span>
+        </div>
+      ) : (
+        <div className="auth-resend-actions">
+          <span className="auth-resend-prompt-text">Didn't receive the code?</span>
+          <div className="auth-resend-btn-group">
+            <button 
+              type="button"
+              className="auth-resend-chip"
+              disabled={isResending}
+              onClick={() => onResend('11')}
+            >
+              <RefreshCw size={13} className={isResending && resendChannel === '11' ? 'spin' : ''} />
+              <span>{isResending && resendChannel === '11' ? 'Sending SMS...' : 'Resend SMS'}</span>
+            </button>
 
-      <div className="auth-resend-prompt" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-        <span>Didn't receive the code?</span>
-        <button 
-          type="button"
-          className="auth-resend-btn"
-          disabled={timerSeconds > 0 || isResending}
-          onClick={() => onResend('11')}
-          style={{
-            opacity: timerSeconds > 0 ? 0.5 : 1,
-            cursor: timerSeconds > 0 ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {isResending && resendChannel === '11' ? 'Resending...' : 'Resend Code'}
-        </button>
-      </div>
+            <button 
+              type="button"
+              className="auth-resend-chip whatsapp"
+              disabled={isResending}
+              onClick={() => onResend('12')}
+            >
+              <MessageSquare size={13} />
+              <span>{isResending && resendChannel === '12' ? 'Sending WhatsApp...' : 'Send on WhatsApp'}</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

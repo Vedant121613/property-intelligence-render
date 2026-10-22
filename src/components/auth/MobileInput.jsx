@@ -1,12 +1,33 @@
 import React from 'react';
-import { Edit2 } from 'lucide-react';
+import { Edit2, CheckCircle2 } from 'lucide-react';
 
 export default function MobileInput({ value, onChange, disabled, onEdit, isLocked }) {
+  const isValid = value.length === 10;
+
   return (
     <div className="auth-input-group">
-      <label className="auth-field-label">Mobile Number</label>
-      <div className="auth-phone-input-row">
-        <div className="auth-country-code-pill">+91</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <label className="auth-field-label">Mobile Number</label>
+        {isLocked && onEdit ? (
+          <button 
+            type="button" 
+            className="auth-edit-phone-pill"
+            title="Change mobile number"
+            onClick={onEdit}
+          >
+            <Edit2 size={12} />
+            <span>Change</span>
+          </button>
+        ) : (
+          <span className="auth-label-helper">Indian Mobile (+91)</span>
+        )}
+      </div>
+
+      <div className={`auth-phone-input-row ${isValid ? 'valid' : ''} ${isLocked ? 'locked' : ''}`}>
+        <div className="auth-country-code-pill">
+          <span className="auth-flag-icon" role="img" aria-label="India">🇮🇳</span>
+          <span>+91</span>
+        </div>
         <input 
           type="tel"
           className="auth-phone-number-field"
@@ -17,20 +38,18 @@ export default function MobileInput({ value, onChange, disabled, onEdit, isLocke
             onChange(val);
           }}
           disabled={disabled}
+          autoFocus={!isLocked}
           required
         />
-        {isLocked && onEdit ? (
-          <button 
-            type="button" 
-            className="auth-edit-phone-btn"
-            title="Change mobile number"
-            onClick={onEdit}
-          >
-            <Edit2 size={14} />
-            <span>Change</span>
-          </button>
-        ) : null}
+        {isValid && !isLocked && (
+          <div className="auth-valid-check" title="Valid mobile number">
+            <CheckCircle2 size={18} color="#10B981" />
+          </div>
+        )}
       </div>
+      {!isLocked && (
+        <span className="auth-field-hint">We'll send a 6-digit OTP for instant login</span>
+      )}
     </div>
   );
 }

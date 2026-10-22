@@ -12,6 +12,7 @@ import LocalityPage from './pages/LocalityPage';
 import ProjectPage from './pages/ProjectPage';
 import ProfilePage from './pages/ProfilePage';
 import PlansPage from './pages/PlansPage';
+import AuthPage from './pages/AuthPage';
 import MobileBottomNav from './components/MobileBottomNav';
 
 function AppContent() {
@@ -20,7 +21,7 @@ function AppContent() {
   const [route, setRoute] = useState(() => {
     const path = window.location.pathname;
     if (path.startsWith('/signin') || path.startsWith('/signup') || path.startsWith('/login')) {
-      return { page: 'home', params: {} };
+      return { page: 'signin', params: {} };
     } else if (path.startsWith('/plans')) {
       return { page: 'plans', params: {} };
     } else if (path.startsWith('/profile')) {
@@ -72,14 +73,6 @@ function AppContent() {
   const [currentCity, setCurrentCity] = useState(route.params?.cityId || 'pune');
 
   const navigateTo = (page, params = {}) => {
-    if (page === 'signin') {
-      openAuthModal('signin');
-      return;
-    } else if (page === 'signup') {
-      openAuthModal('signup');
-      return;
-    }
-
     setRoute({ page, params });
     if (params.cityId) {
       setCurrentCity(params.cityId);
@@ -88,6 +81,8 @@ function AppContent() {
     let targetUrl = '/';
     if (page === 'home') {
       targetUrl = '/';
+    } else if (page === 'signin' || page === 'signup') {
+      targetUrl = '/signin';
     } else if (page === 'plans') {
       targetUrl = '/plans';
     } else if (page === 'profile') {
@@ -114,15 +109,6 @@ function AppContent() {
   };
 
   useEffect(() => {
-    const path = window.location.pathname;
-    if (path.startsWith('/signin') || path.startsWith('/login')) {
-      openAuthModal('signin');
-    } else if (path.startsWith('/signup')) {
-      openAuthModal('signup');
-    }
-  }, []);
-
-  useEffect(() => {
     const handlePopState = (event) => {
       if (event.state && event.state.page) {
         setRoute(event.state);
@@ -138,21 +124,27 @@ function AppContent() {
 
   return (
     <div className="app-container">
-      {/* Top Persistent Navbar */}
-      <Navbar
-        currentCity={currentCity}
-        onSelectCity={(cityId) => {
-          if (cityId === 'mumbai') return;
-          setCurrentCity(cityId);
-          if (route.page === 'city') {
-            navigateTo('city', { cityId });
-          }
-        }}
-        onNavigate={navigateTo}
-      />
+      {/* Top Persistent Navbar (Hidden on dedicated Auth page) */}
+      {route.page !== 'signin' && (
+        <Navbar
+          currentCity={currentCity}
+          onSelectCity={(cityId) => {
+            if (cityId === 'mumbai') return;
+            setCurrentCity(cityId);
+            if (route.page === 'city') {
+              navigateTo('city', { cityId });
+            }
+          }}
+          onNavigate={navigateTo}
+        />
+      )}
 
       {/* Main Page View */}
       <main className="main-content">
+        {route.page === 'signin' && (
+          <AuthPage onNavigate={navigateTo} />
+        )}
+
         {route.page === 'plans' && (
           <PlansPage onNavigate={navigateTo} />
         )}
@@ -217,8 +209,8 @@ function AppContent() {
         )}
       </main>
 
-      {/* Global Footer */}
-      <Footer onNavigate={navigateTo} />
+      {/* Global Footer (Omitted on dedicated Auth page) */}
+      {route.page !== 'signin' && <Footer onNavigate={navigateTo} />}
 
       {/* Floating Chat Assistant */}
       <ChatWidget />
